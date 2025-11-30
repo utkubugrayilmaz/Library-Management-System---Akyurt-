@@ -11,11 +11,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR (DÜZELTİLMİŞ) ---
+# --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR ---
 st.markdown("""
 <style>
     /* 1. GENEL YAZI BOYUTU */
-    html, body, p, div, span {
+    html, body, p, div, span, label {
         font-family: 'Segoe UI', sans-serif;
         font-size: 20px !important; 
         line-height: 1.6;
@@ -24,6 +24,7 @@ st.markdown("""
     /* 2. BAŞLIKLAR */
     h1 { font-size: 3rem !important; color: #4A90E2; font-weight: 700; }
     h2 { font-size: 2.4rem !important; border-bottom: 2px solid #444; margin-bottom: 20px; }
+    h3 { font-size: 1.8rem !important; color: #ddd; }
 
     /* 3. KPI KARTLARI (SAYILARIN OLDUĞU KUTULAR) */
     div[data-testid="stMetric"] {
@@ -32,8 +33,6 @@ st.markdown("""
         padding: 10px;                
         border-radius: 12px;          
         box-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
-
-        /* İÇERİĞİ ORTALA */
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -42,7 +41,7 @@ st.markdown("""
         min-height: 150px; 
     }
 
-    /* Kartın Başlığı (Toplam Envanter vb.) */
+    /* Kartın Başlığı */
     div[data-testid="stMetricLabel"] {
         font-size: 1.5rem !important; 
         color: #bbb;
@@ -50,11 +49,10 @@ st.markdown("""
         text-align: center !important;
     }
 
-    /* --- BURASI SAYIYI BÜYÜTEN KISIM --- */
-    /* Hem ana kutuyu hem de içindeki div'i hedefliyoruz ki kaçarı olmasın */
+    /* Kartın Değeri (Sayılar) */
     div[data-testid="stMetricValue"], 
     div[data-testid="stMetricValue"] > div {
-        font-size: 70px !important; /* BURAYI DEĞİŞTİRİRSEN SAYI BÜYÜR/KÜÇÜLÜR */
+        font-size: 70px !important; 
         font-weight: 900 !important;
         color: white;
         text-align: center !important;
@@ -79,144 +77,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# # --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR (FINAL) ---
-# st.markdown("""
-# <style>
-#     /* 1. GENEL YAZI BOYUTU - HER ŞEY İÇİN */
-#     html, body, p, div, span {
-#         font-family: 'Segoe UI', sans-serif;
-#         font-size: 20px !important; /* Standart metin boyutu */
-#         line-height: 1.6;
-#     }
-#
-#     /* 2. BAŞLIKLAR */
-#     h1 { font-size: 3rem !important; color: #4A90E2; font-weight: 700; }
-#     h2 { font-size: 2.4rem !important; border-bottom: 2px solid #444; margin-bottom: 20px; }
-#     h3 { font-size: 1.8rem !important; color: #ddd; }
-#
-#     /* 3. KPI KARTLARI (SAYILARIN OLDUĞU KUTULAR) - DEVASA VE ORTALI */
-#     div[data-testid="stMetric"] {
-#         background-color: #222;       /* Kutu arka planı koyu gri */
-#         border: 2px solid #555;       /* Çerçeve */
-#         padding: 15px 0px;            /* Dikey boşluk */
-#         border-radius: 12px;          /* Köşeleri yuvarla */
-#         box-shadow: 2px 2px 5px rgba(0,0,0,0.5); /* Hafif gölge */
-#
-#         /* MERKEZLEME AYARLARI */
-#         text-align: center !important;
-#         display: flex;
-#         flex-direction: column;
-#         align-items: center;
-#         justify-content: center;
-#         min-height: 160px; /* Kutuların hepsi eşit boyda dursun */
-#     }
-#
-#     /* Kartın Başlığı (Toplam Envanter vb.) */
-#     div[data-testid="stMetricLabel"] {
-#         font-size: 1.4rem !important;
-#         color: #bbb;
-#         width: 100%;
-#         text-align: center !important;
-#         justify-content: center !important;
-#         display: flex;
-#     }
-#     div[data-testid="stMetricLabel"] p {
-#         font-size: 1.4rem !important;
-#     }
-#
-#     /* Kartın Değeri (Sayılar: 50, 20 vs.) */
-#     div[data-testid="stMetricValue"] {
-#         font-size: 15rem !important; /* 80px DEV PUNTOLU SAYI */
-#         font-weight: 900 !important; /* Kapkalın */
-#         color: white;
-#         text-align: center !important;
-#         margin-top: 5px;
-#         line-height: 1.2;
-#     }
-#
-#     /* 4. INPUT VE BUTONLAR - BÜYÜK BOY */
-#     .stSelectbox div[data-baseweb="select"] > div {
-#         height: 3.5rem;
-#     }
-#     .stSelectbox div[data-baseweb="select"] span {
-#         font-size: 1.2rem !important;
-#     }
-#     .stTextInput input {
-#         font-size: 1.2rem !important;
-#         height: 3.5rem;
-#     }
-#     .stButton button {
-#         font-size: 1.4rem !important;
-#         height: 4rem !important;
-#         font-weight: bold;
-#     }
-#
-#     /* 5. KENAR ÇUBUĞU MENÜSÜ */
-#     section[data-testid="stSidebar"] .stRadio label {
-#         font-size: 1.4rem !important;
-#         padding: 15px 5px;
-#     }
-#
-#     /* 6. TABLO STİLİ (HTML TABLO İÇİN) */
-#     .big-table {
-#         width: 100%;
-#         border-collapse: collapse;
-#         margin-top: 20px;
-#         font-size: 1.2rem;
-#     }
-#     .big-table th {
-#         text-align: left;
-#         background-color: #333;
-#         color: #4A90E2;
-#         padding: 15px;
-#         font-size: 1.3rem;
-#         border-bottom: 2px solid #555;
-#     }
-#     .big-table td {
-#         padding: 15px;
-#         border-bottom: 1px solid #444;
-#         color: #eee;
-#     }
-#     .big-table tr:hover {
-#         background-color: #222;
-#     }
-#     .alert-row {
-#         color: #ff6b6b !important;
-#         font-weight: bold;
-#     }
-# </style>
-# """, unsafe_allow_html=True)
-
-# --- YARDIMCI: ÖZEL BÜYÜK TABLO OLUŞTURUCU ---
+# --- YARDIMCI: HTML TABLO ---
 def create_custom_table(df, alert_col=None):
-    """
-    Pandas DataFrame'ini alır ve okunabilirliği yüksek HTML tabloya çevirir.
-    """
-    if df.empty:
-        return "<div style='padding:20px; font-size:1.2rem;'>Kayıt bulunamadı.</div>"
-
-    html = '<table class="big-table">'
-
-    # Başlıklar
-    html += '<thead><tr>'
-    for col in df.columns:
-        html += f'<th>{col}</th>'
-    html += '</tr></thead>'
-
-    # Satırlar
-    html += '<tbody>'
+    if df.empty: return "<div style='padding:20px; font-size:1.2rem;'>Kayıt bulunamadı.</div>"
+    html = '<table class="big-table"><thead><tr>'
+    for col in df.columns: html += f'<th>{col}</th>'
+    html += '</tr></thead><tbody>'
     for index, row in df.iterrows():
         html += '<tr>'
         for col in df.columns:
             val = row[col]
-            # Eğer gecikme sütunuysa ve değer varsa kırmızı yap
-            style = ""
-            if alert_col and col == alert_col:
-                style = "class='alert-row'"
+            style = "class='alert-row'" if alert_col and col == alert_col else ""
             html += f'<td {style}>{val}</td>'
         html += '</tr>'
     html += '</tbody></table>'
-
     return html
 
 
@@ -229,8 +103,7 @@ def get_db_connection():
 def get_books_dict(only_available=False):
     conn = get_db_connection()
     query = "SELECT id, title, author, location FROM books"
-    if only_available:
-        query += " WHERE status='Müsait'"
+    if only_available: query += " WHERE status='Müsait'"
     df = pd.read_sql(query, conn)
     conn.close()
     if df.empty: return {}
@@ -249,25 +122,27 @@ def get_members_dict():
 
 with st.sidebar:
     st.markdown("## 🏛️ AKYURT KÜTÜPHANESİ")
-    st.markdown("Yönetim Paneli v3.2")
+    st.markdown("Yönetim Paneli v4.0")
     st.markdown("---")
-    menu = st.radio("ANA MENÜ", ["Operasyon Merkezi", "Ödünç ve İade", "Arşiv Sorgulama", "Üye Veritabanı"],
+    menu = st.radio("ANA MENÜ",
+                    ["Operasyon Merkezi", "Ödünç ve İade", "📚 Kitap Yönetimi", "👥 Üye Yönetimi"],
                     label_visibility="collapsed")
     st.markdown("---")
     st.info(f"📅 Tarih: {datetime.now().strftime('%d.%m.%Y')}")
 
-# 1. MODÜL: OPERASYON MERKEZİ
+# ========================================================
+# 1. MODÜL: OPERASYON MERKEZİ (DASHBOARD)
+# ========================================================
 if menu == "Operasyon Merkezi":
     st.title("Operasyon Merkezi")
 
     conn = get_db_connection()
 
-    # İstatistikler
     total_books = pd.read_sql("SELECT COUNT(*) FROM books", conn).iloc[0, 0]
     total_members = pd.read_sql("SELECT COUNT(*) FROM members", conn).iloc[0, 0]
 
     df_trans = pd.read_sql("""
-        SELECT t.id, m.name as 'Üye Adı Soyadı', b.title as 'Kitap Adı', 
+        SELECT t.id, m.name as 'Üye', b.title as 'Eser', 
         t.due_date as 'Teslim Tarihi', m.phone as 'Telefon',
         (julianday('now') - julianday(t.due_date)) as gecikme
         FROM transactions t
@@ -279,7 +154,7 @@ if menu == "Operasyon Merkezi":
     active_loans = len(df_trans)
     overdue_df = df_trans[df_trans['gecikme'] > 0].copy()
 
-    # KPI Kartları
+    # KPI KARTLARI (DEVASA PUNTOLU)
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Toplam Kitap", total_books)
     c2.metric("Toplam Üye", total_members)
@@ -288,51 +163,43 @@ if menu == "Operasyon Merkezi":
 
     st.markdown("---")
 
-    # KRİTİK LİSTE (Custom HTML Table kullanıyoruz)
     if not overdue_df.empty:
-        st.subheader("⚠️ DİKKAT: Teslim Tarihi Geçenler Listesi")
-        st.warning("Bu listedeki kişilerin teslim tarihi geçmiştir. Lütfen aşağıdaki panelden SMS gönderiniz.")
-
-        # Tabloyu hazırlama (Gecikme gününü ekle)
-        display_df = overdue_df[['Üye Adı Soyadı', 'Kitap Adı', 'Teslim Tarihi', 'Telefon']].copy()
+        st.subheader("⚠️ DİKKAT: Teslim Tarihi Geçenler")
+        display_df = overdue_df[['Üye', 'Eser', 'Teslim Tarihi', 'Telefon']].copy()
         display_df['Gecikme Süresi'] = overdue_df['gecikme'].astype(int).astype(str) + " GÜN"
 
-        # HTML Tabloyu Bas (Büyük Fontlu)
         st.markdown(create_custom_table(display_df, alert_col="Gecikme Süresi"), unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Hızlı Aksiyon Paneli
         with st.container(border=True):
-            st.markdown("### 🔔 SMS Gönderim Paneli")
+            st.markdown("### 🔔 SMS Paneli")
             c_sel, c_btn = st.columns([3, 1])
-            # Dropdown da büyük olacak (CSS ile ayarlandı)
-            selected_person = c_sel.selectbox("Hatırlatma Yapılacak Kişiyi Seçiniz:",
-                                              overdue_df['Üye Adı Soyadı'] + " - " + overdue_df['Kitap Adı'])
+            selected_person = c_sel.selectbox("Kişi Seç:", overdue_df['Üye'] + " - " + overdue_df['Eser'])
             if c_btn.button("SMS GÖNDER"):
-                st.success(f"✅ SMS Başarıyla İletildi: {selected_person}")
+                st.success(f"✅ SMS İletildi: {selected_person}")
     else:
-        st.success("Harika! Gecikmiş iade bulunmuyor.")
+        st.success("Gecikmiş iade bulunmuyor.")
 
+# ========================================================
 # 2. MODÜL: ÖDÜNÇ VE İADE
+# ========================================================
 elif menu == "Ödünç ve İade":
     st.title("Ödünç ve İade İşlemleri")
 
     tab1, tab2 = st.tabs(["📤 KİTAP VER (ÖDÜNÇ)", "📥 KİTAP AL (İADE)"])
 
     with tab1:
-        st.markdown("### Yeni Ödünç Kaydı Oluştur")
+        st.markdown("### Ödünç Verme Ekranı")
         books = get_books_dict(only_available=True)
         members = get_members_dict()
 
         if not books:
-            st.error("Stokta müsait kitap yok!")
+            st.error("Stokta kitap kalmadı.")
         else:
-            sel_mem = st.selectbox("Üye Seçiniz:", list(members.keys()))
-            sel_bk = st.selectbox("Kitap Seçiniz:", list(books.keys()))
-            days = st.slider("Ödünç Süresi (Gün):", 7, 45, 15)
+            sel_mem = st.selectbox("Üye Seç:", list(members.keys()))
+            sel_bk = st.selectbox("Kitap Seç:", list(books.keys()))
+            days = st.slider("Süre (Gün):", 1, 14, 14)
 
-            if st.button("KAYDET VE ÖDÜNÇ VER", type="primary"):
+            if st.button("ÖDÜNÇ VER", type="primary"):
                 conn = get_db_connection()
                 end_date = datetime.now() + timedelta(days=days)
                 conn.execute(
@@ -341,12 +208,12 @@ elif menu == "Ödünç ve İade":
                 conn.execute("UPDATE books SET status = 'Ödünçte' WHERE id = ?", (books[sel_bk],))
                 conn.commit()
                 conn.close()
-                st.success("İşlem Başarılı! Kitap verildi.")
+                st.success("İşlem tamamlandı.")
                 time.sleep(1)
                 st.rerun()
 
     with tab2:
-        st.markdown("### İade İşlemi")
+        st.markdown("### İade Alma Ekranı")
         conn = get_db_connection()
         loans = pd.read_sql(
             "SELECT t.id, b.title, m.name FROM transactions t JOIN books b ON t.book_id=b.id JOIN members m ON t.member_id=m.id WHERE t.status='Aktif'",
@@ -357,7 +224,7 @@ elif menu == "Ödünç ve İade":
             st.info("İade bekleyen kitap yok.")
         else:
             loan_dict = {f"{row['title']} - {row['name']}": row['id'] for i, row in loans.iterrows()}
-            sel_ret = st.selectbox("İade Edilen Kitabı Seçin:", list(loan_dict.keys()))
+            sel_ret = st.selectbox("İade Edilen:", list(loan_dict.keys()))
 
             if st.button("İADEYİ ONAYLA"):
                 tid = loan_dict[sel_ret]
@@ -367,53 +234,184 @@ elif menu == "Ödünç ve İade":
                 conn.execute("UPDATE books SET status='Müsait' WHERE id=?", (bid,))
                 conn.commit()
                 conn.close()
-                st.success("Kitap iade alındı.")
+                st.success("İade alındı.")
                 time.sleep(1)
                 st.rerun()
 
-# 3. MODÜL: ARŞİV SORGULAMA
-elif menu == "Arşiv Sorgulama":
-    st.title("Arşiv Sorgulama")
-    search = st.text_input("Kitap Adı, Yazar veya Raf No Giriniz:", placeholder="Büyük harf küçük harf farketmez...")
+# ========================================================
+# 3. MODÜL: KİTAP YÖNETİMİ (YENİ CRUD SİSTEMİ)
+# ========================================================
+elif menu == "📚 Kitap Yönetimi":
+    st.title("Kitap Envanter Yönetimi")
 
-    conn = get_db_connection()
-    q = "SELECT title as 'Kitap', author as 'Yazar', location as 'Raf', status as 'Durum' FROM books"
-    if search:
-        q += f" WHERE title LIKE '%{search}%' OR author LIKE '%{search}%'"
-    df = pd.read_sql(q, conn)
-    conn.close()
+    tab_list, tab_add, tab_edit = st.tabs(["📋 Kitap Listesi", "➕ Yeni Kitap Ekle", "✏️ Düzenle / Sil"])
 
-    # Özel HTML tablo ile gösterim (Daha okunaklı)
-    st.markdown(create_custom_table(df), unsafe_allow_html=True)
+    # --- LİSTELEME ---
+    with tab_list:
+        search = st.text_input("Kitap Ara:", placeholder="Kitap adı, yazar...")
+        conn = get_db_connection()
+        q = "SELECT title as 'Eser', author as 'Yazar', location as 'Raf', status as 'Durum', isbn as 'ISBN' FROM books"
+        if search: q += f" WHERE title LIKE '%{search}%' OR author LIKE '%{search}%'"
+        df = pd.read_sql(q, conn)
+        st.markdown(create_custom_table(df), unsafe_allow_html=True)
+        conn.close()
 
-# 4. MODÜL: ÜYE VERİTABANI
-elif menu == "Üye Veritabanı":
-    st.title("Üye Yönetimi")
-
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        st.markdown("### ➕ Yeni Üye Ekle")
+    # --- EKLEME ---
+    with tab_add:
+        st.markdown("### Yeni Eser Girişi")
         with st.container(border=True):
-            nm = st.text_input("Ad Soyad:")
-            ph = st.text_input("Telefon:")
-            em = st.text_input("E-Posta:")
-            if st.button("ÜYEYİ KAYDET"):
-                if nm and ph:
+            with st.form("add_book_form"):
+                col1, col2 = st.columns(2)
+                t = col1.text_input("Kitap Adı")
+                a = col2.text_input("Yazar")
+                l = col1.text_input("Raf Numarası")
+                i = col2.text_input("ISBN (Opsiyonel)")
+
+                if st.form_submit_button("KİTABI KAYDET"):
+                    if t and a:
+                        conn = get_db_connection()
+                        conn.execute("INSERT INTO books (title, author, location, isbn) VALUES (?, ?, ?, ?)",
+                                     (t, a, l, i))
+                        conn.commit()
+                        conn.close()
+                        st.success(f"'{t}' envantere eklendi.")
+                    else:
+                        st.error("Kitap adı ve Yazar zorunludur.")
+
+    # --- DÜZENLEME / SİLME ---
+    with tab_edit:
+        st.markdown("### Kitap Düzenle veya Sil")
+
+        # Tüm kitapları (ID'leri ile) çekelim
+        all_books = get_books_dict()  # Tüm kitaplar (müsait/ödünçte farketmez)
+
+        if not all_books:
+            st.warning("Düzenlenecek kitap yok.")
+        else:
+            selected_book_key = st.selectbox("İşlem Yapılacak Kitabı Seç:", list(all_books.keys()))
+            selected_book_id = all_books[selected_book_key]
+
+            conn = get_db_connection()
+            # Seçilen kitabın mevcut bilgilerini getir
+            curr_book = conn.execute("SELECT * FROM books WHERE id=?", (selected_book_id,)).fetchone()
+            conn.close()
+
+            # Form içinde göster (Index 1=title, 2=author, 3=isbn, 4=location)
+            with st.form("edit_book_form"):
+                st.info(f"Seçilen Kitap ID: {selected_book_id}")
+                new_title = st.text_input("Kitap Adı", value=curr_book[1])
+                new_author = st.text_input("Yazar", value=curr_book[2])
+                new_loc = st.text_input("Raf Yeri", value=curr_book[4])
+
+                c1, c2 = st.columns(2)
+                update_btn = c1.form_submit_button("💾 BİLGİLERİ GÜNCELLE")
+                delete_btn = c2.form_submit_button("🗑️ KİTABI SİL (DİKKAT)")
+
+                if update_btn:
                     conn = get_db_connection()
-                    conn.execute("INSERT INTO members (name, phone, email, join_date) VALUES (?, ?, ?, DATE('now'))",
-                                 (nm, ph, em))
+                    conn.execute("UPDATE books SET title=?, author=?, location=? WHERE id=?",
+                                 (new_title, new_author, new_loc, selected_book_id))
                     conn.commit()
                     conn.close()
-                    st.success("Üye eklendi.")
-                else:
-                    st.error("Ad ve Telefon zorunludur.")
+                    st.success("Bilgiler güncellendi!")
+                    time.sleep(1)
+                    st.rerun()
 
-    with col2:
-        st.markdown("### 📋 Üye Listesi")
+                if delete_btn:
+                    conn = get_db_connection()
+                    # Önce kontrol: Kitap ödünçte mi?
+                    status = conn.execute("SELECT status FROM books WHERE id=?", (selected_book_id,)).fetchone()[0]
+                    if status == 'Ödünçte':
+                        st.error("HATA: Bu kitap şu an ödünçte olduğu için silinemez! Önce iade alın.")
+                    else:
+                        conn.execute("DELETE FROM books WHERE id=?", (selected_book_id,))
+                        conn.commit()
+                        st.success("Kitap silindi.")
+                        time.sleep(1)
+                        st.rerun()
+                    conn.close()
+
+# ========================================================
+# 4. MODÜL: ÜYE YÖNETİMİ (YENİ CRUD SİSTEMİ)
+# ========================================================
+elif menu == "👥 Üye Yönetimi":
+    st.title("Üye Veritabanı Yönetimi")
+
+    tab_list, tab_add, tab_edit = st.tabs(["📋 Üye Listesi", "➕ Yeni Üye Ekle", "✏️ Düzenle / Sil"])
+
+    with tab_list:
         conn = get_db_connection()
-        members = pd.read_sql(
-            "SELECT name as 'Ad Soyad', phone as 'Telefon', email as 'E-Posta' FROM members ORDER BY id DESC", conn)
+        df = pd.read_sql(
+            "SELECT name as 'Ad Soyad', phone as 'Telefon', email as 'E-Posta', join_date as 'Kayıt Tarihi' FROM members",
+            conn)
+        st.markdown(create_custom_table(df), unsafe_allow_html=True)
         conn.close()
-        # Custom Table ile göster
-        st.markdown(create_custom_table(members), unsafe_allow_html=True)
+
+    with tab_add:
+        st.markdown("### Yeni Üye Kaydı")
+        with st.container(border=True):
+            with st.form("add_member_form"):
+                nm = st.text_input("Ad Soyad")
+                ph = st.text_input("Telefon")
+                em = st.text_input("E-Posta")
+
+                if st.form_submit_button("ÜYEYİ KAYDET"):
+                    if nm and ph:
+                        conn = get_db_connection()
+                        conn.execute(
+                            "INSERT INTO members (name, phone, email, join_date) VALUES (?, ?, ?, DATE('now'))",
+                            (nm, ph, em))
+                        conn.commit()
+                        conn.close()
+                        st.success(f"{nm} sisteme eklendi.")
+                    else:
+                        st.error("Ad ve Telefon zorunludur.")
+
+    with tab_edit:
+        st.markdown("### Üye Bilgilerini Düzenle")
+        all_members = get_members_dict()
+
+        if not all_members:
+            st.warning("Kayıtlı üye yok.")
+        else:
+            sel_mem_key = st.selectbox("İşlem Yapılacak Üyeyi Seç:", list(all_members.keys()))
+            sel_mem_id = all_members[sel_mem_key]
+
+            conn = get_db_connection()
+            curr_mem = conn.execute("SELECT * FROM members WHERE id=?", (sel_mem_id,)).fetchone()
+            conn.close()
+
+            with st.form("edit_mem_form"):
+                new_name = st.text_input("Ad Soyad", value=curr_mem[1])
+                new_phone = st.text_input("Telefon", value=curr_mem[2])
+                new_email = st.text_input("E-Posta", value=curr_mem[3])
+
+                c1, c2 = st.columns(2)
+                upd_btn = c1.form_submit_button("💾 GÜNCELLE")
+                del_btn = c2.form_submit_button("🗑️ ÜYEYİ SİL")
+
+                if upd_btn:
+                    conn = get_db_connection()
+                    conn.execute("UPDATE members SET name=?, phone=?, email=? WHERE id=?",
+                                 (new_name, new_phone, new_email, sel_mem_id))
+                    conn.commit()
+                    conn.close()
+                    st.success("Üye bilgileri güncellendi.")
+                    time.sleep(1)
+                    st.rerun()
+
+                if del_btn:
+                    conn = get_db_connection()
+                    # Kontrol: Üyenin üstünde kitap var mı?
+                    active_loan = conn.execute("SELECT COUNT(*) FROM transactions WHERE member_id=? AND status='Aktif'",
+                                               (sel_mem_id,)).fetchone()[0]
+
+                    if active_loan > 0:
+                        st.error(f"HATA: Bu üyenin elinde {active_loan} adet iade edilmemiş kitap var. Silinemez!")
+                    else:
+                        conn.execute("DELETE FROM members WHERE id=?", (sel_mem_id,))
+                        conn.commit()
+                        st.success("Üye silindi.")
+                        time.sleep(1)
+                        st.rerun()
+                    conn.close()
