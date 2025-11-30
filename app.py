@@ -6,7 +6,7 @@ import time
 
 # --- KURUMSAL AYARLAR ---
 st.set_page_config(
-    page_title="Akyurt Kütüphane YS",
+    page_title="Akyurt Millet Kütüphanesi YS",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -97,6 +97,19 @@ def create_custom_table(df, alert_col=None):
 # --- VERİTABANI BAĞLANTISI ---
 def get_db_connection():
     conn = sqlite3.connect('library.db', check_same_thread=False)
+    # Rezervasyon tablosunu kontrol et
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS reservations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                book_id INTEGER,
+                member_id INTEGER,
+                request_date DATE,
+                status TEXT DEFAULT 'Bekliyor',
+                FOREIGN KEY (book_id) REFERENCES books (id),
+                FOREIGN KEY (member_id) REFERENCES members (id)
+            )
+        ''')
+    conn.commit()
     return conn
 
 
@@ -125,7 +138,7 @@ with st.sidebar:
     st.markdown("Yönetim Paneli v4.0")
     st.markdown("---")
     menu = st.radio("ANA MENÜ",
-                    ["Operasyon Merkezi", "Ödünç ve İade", "📚 Kitap Yönetimi", "👥 Üye Yönetimi"],
+                    ["Operasyon Merkezi", "Ödünç ve İade","Rezervasyon", "Kitap Yönetimi", "Üye Yönetimi"],
                     label_visibility="collapsed")
     st.markdown("---")
     st.info(f"📅 Tarih: {datetime.now().strftime('%d.%m.%Y')}")
@@ -201,6 +214,28 @@ elif menu == "Ödünç ve İade":
 
             if st.button("ÖDÜNÇ VER", type="primary"):
                 conn = get_db_connection()
+                # --- REZERVASYON KONTROLÜ BAŞLANGIÇ ---
+                bk_id = books[sel_bk]
+                mem_id = members[sel_mem]
+
+                # Bu kitap için sırada bekleyen var mı?
+                res_check = conn.execute(
+                    "SELECT m.name FROM reservations r JOIN members m ON r.member_id = m.id WHERE r.book_id=? AND r.status='Bekliyor'",
+                    (bk_id,)).fetchone()
+
+                if res_check:
+                    res_owner = res_check[0]
+                    # Almaya gelen kişi rezervasyon sahibi mi? (Basit isim kontrolü)
+                    if sel_mem.split(" (")[0] != res_owner:
+                        st.error(f"DUR! Bu kitap **{res_owner}** adına rezerve edilmiş. Başkasına veremezsin.")
+                        conn.close()
+                        st.stop()  # İşlemi durdur
+                    else:
+                        # Rezervasyon sahibine veriyoruz, rezervasyonu düşelim
+                        conn.execute(
+                            "UPDATE reservations SET status='Tamamlandı' WHERE book_id=? AND status='Bekliyor'",
+                            (bk_id,))
+                # --- REZERVASYON KONTROLÜ BİTİŞ ---
                 end_date = datetime.now() + timedelta(days=days)
                 conn.execute(
                     "INSERT INTO transactions (book_id, member_id, issue_date, due_date) VALUES (?, ?, DATE('now'), ?)",
@@ -236,12 +271,104 @@ elif menu == "Ödünç ve İade":
                 conn.close()
                 st.success("İade alındı.")
                 time.sleep(1)
+                # --- İADE SONRASI UYARI ---
+                res_check = conn.execute("""
+                                    SELECT m.name, m.phone FROM reservations r 
+                                    JOIN members m ON r.member_id = m.id 
+                                    WHERE r.book_id=? AND r.status='Bekliyor' 
+                                    ORDER BY r.request_date ASC LIMIT 1
+                                """, (bid,)).fetchone()
+
+                if res_check:
+                    st.warning(f"DİKKAT! Bu kitap için sırada bekleyen var: **{res_check[0]}**")
+                    st.info(f"İletişim: {res_check[1]} - Lütfen haber verin.")
+                    time.sleep(4)  # Uyarıyı okuması için biraz beklet
+                # -------------------------
+                st.rerun()
+
+
+# ========================================================
+# YENİ MODÜL: REZERVASYON
+# ========================================================
+elif menu == "Rezervasyon":
+    st.title("Kitap Rezervasyon Sistemi")
+
+    col1, col2 = st.columns([1, 1])
+
+    # SOL: Talep Oluştur
+    with col1:
+        st.markdown("### ➕ Sıraya Gir (Talep)")
+        with st.container(border=True):
+            # Sadece ÖDÜNÇTE olan kitaplar listelenir
+            conn = get_db_connection()
+            # Ödünçteki kitapları bul
+            borrowed_df = pd.read_sql("SELECT id, title, author FROM books WHERE status='Ödünçte'", conn)
+            books_borrowed = {f"{row['title']} | {row['author']}": row['id'] for i, row in borrowed_df.iterrows()}
+            conn.close()
+
+            members = get_members_dict()
+
+            if not books_borrowed:
+                st.success("Tüm kitaplar rafta! Rezervasyona gerek yok, direkt ödünç verebilirsiniz.")
+            else:
+                r_mem = st.selectbox("Talep Eden Üye:", list(members.keys()))
+                r_bk = st.selectbox("İstenen Kitap (Sadece Ödünçtekiler):", list(books_borrowed.keys()))
+
+                if st.button("REZERVASYON OLUŞTUR"):
+                    conn = get_db_connection()
+                    bk_id = books_borrowed[r_bk]
+                    mem_id = members[r_mem]
+
+                    # Zaten sırada mı?
+                    check = conn.execute(
+                        "SELECT * FROM reservations WHERE book_id=? AND member_id=? AND status='Bekliyor'",
+                        (bk_id, mem_id)).fetchone()
+                    if check:
+                        st.error("Bu üye zaten bu kitap için sırada bekliyor.")
+                    else:
+                        conn.execute(
+                            "INSERT INTO reservations (book_id, member_id, request_date) VALUES (?, ?, DATE('now'))",
+                            (bk_id, mem_id))
+                        conn.commit()
+                        st.success(f"Rezervasyon başarıyla alındı.")
+                    conn.close()
+
+    # SAĞ: Bekleyenler Listesi
+    with col2:
+        st.markdown("### Bekleyen Talepler")
+        conn = get_db_connection()
+        res_df = pd.read_sql("""
+            SELECT r.id, b.title as 'Kitap', m.name as 'Üye', r.request_date as 'Tarih'
+            FROM reservations r
+            JOIN books b ON r.book_id = b.id
+            JOIN members m ON r.member_id = m.id
+            WHERE r.status = 'Bekliyor'
+            ORDER BY r.request_date ASC
+        """, conn)
+        conn.close()
+
+        if res_df.empty:
+            st.info("Sırada bekleyen kimse yok.")
+        else:
+            # HTML Tablo ile göster
+            st.markdown(create_custom_table(res_df), unsafe_allow_html=True)
+
+            # İptal Etme Alanı
+            st.markdown("---")
+            cancel_id = st.selectbox("İptal Edilecek Talep ID:", res_df['id'])
+            if st.button("TALEBİ İPTAL ET"):
+                conn = get_db_connection()
+                conn.execute("UPDATE reservations SET status='İptal' WHERE id=?", (cancel_id,))
+                conn.commit()
+                conn.close()
+                st.success("Talep silindi.")
+                time.sleep(1)
                 st.rerun()
 
 # ========================================================
 # 3. MODÜL: KİTAP YÖNETİMİ (YENİ CRUD SİSTEMİ)
 # ========================================================
-elif menu == "📚 Kitap Yönetimi":
+elif menu == "Kitap Yönetimi":
     st.title("Kitap Envanter Yönetimi")
 
     tab_list, tab_add, tab_edit = st.tabs(["📋 Kitap Listesi", "➕ Yeni Kitap Ekle", "✏️ Düzenle / Sil"])
@@ -334,7 +461,7 @@ elif menu == "📚 Kitap Yönetimi":
 # ========================================================
 # 4. MODÜL: ÜYE YÖNETİMİ (YENİ CRUD SİSTEMİ)
 # ========================================================
-elif menu == "👥 Üye Yönetimi":
+elif menu == "Üye Yönetimi":
     st.title("Üye Veritabanı Yönetimi")
 
     tab_list, tab_add, tab_edit = st.tabs(["📋 Üye Listesi", "➕ Yeni Üye Ekle", "✏️ Düzenle / Sil"])
