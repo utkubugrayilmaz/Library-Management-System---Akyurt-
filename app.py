@@ -3,13 +3,23 @@ import pandas as pd
 import sqlite3
 from datetime import datetime, timedelta
 import time
+import base64
+import os
 
-# --- KURUMSAL AYARLAR ---
+# --- KURUMSAL AYARLAR (AKYURT BELEDİYESİ) ---
 st.set_page_config(
-    page_title="Akyurt Millet Kütüphanesi YS",
+    page_title="Akyurt Belediyesi | Kütüphane Bilgi Sistemi",
+    page_icon="https://www.akyurt.bel.tr/wp-content/uploads/2019/07/logo-1.png", # Belediye Favicon
     layout="wide",
     initial_sidebar_state="expanded"
 )
+# --- RESMİ KODA ÇEVİREN FONKSİYON ---
+def get_img_as_base64(file_path):
+    if not os.path.exists(file_path):
+        return ""
+    with open(file_path, "rb") as f:
+        data = f.read()
+    return f"data:image/png;base64,{base64.b64encode(data).decode()}"
 
 # --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR ---
 st.markdown("""
@@ -22,7 +32,7 @@ st.markdown("""
     }
 
     /* 2. BAŞLIKLAR */
-    h1 { font-size: 3rem !important; color: #4A90E2; font-weight: 700; }
+    h1 { font-size: 3rem !important; color: #0056b3; font-weight: 700; }
     h2 { font-size: 2.4rem !important; border-bottom: 2px solid #444; margin-bottom: 20px; }
     h3 { font-size: 1.8rem !important; color: #ddd; }
 
@@ -69,7 +79,7 @@ st.markdown("""
     section[data-testid="stSidebar"] .stRadio label { font-size: 1.4rem !important; padding: 15px 5px; }
 
     .big-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 1.2rem; }
-    .big-table th { text-align: left; background-color: #333; color: #4A90E2; padding: 15px; font-size: 1.3rem; border-bottom: 2px solid #555; }
+    .big-table th { text-align: left; background-color: #333; color: #0056b3; padding: 15px; font-size: 1.3rem; border-bottom: 2px solid #555; }
     .big-table td { padding: 15px; border-bottom: 1px solid #444; color: #eee; }
     .big-table tr:hover { background-color: #222; }
     .alert-row { color: #ff6b6b !important; font-weight: bold; }
@@ -134,13 +144,39 @@ def get_members_dict():
 # --- UYGULAMA BAŞLANGICI ---
 
 with st.sidebar:
-    st.markdown("## 🏛️ AKYURT KÜTÜPHANESİ")
-    st.markdown("Yönetim Paneli v4.0")
+    # --- YEREL LOGOYU GÖSTERME KODU ---
+    logo_path = "akyurt_logo.png"
+    img_base64 = get_img_as_base64(logo_path)
+
+    # Resim varsa onu göster, yoksa sadece yazı yaz
+    if img_base64:
+        st.markdown(
+            f"""
+            <div style="text-align: center; padding-top: 10px;">
+                <img src="{img_base64}" width="130">
+                <br><br>
+                <h3 style="color: #ffffff; margin:0; font-weight: 800; font-size: 22px;">AKYURT BELEDİYESİ</h3>
+                <p style="color: #a3a3a3; font-size: 15px; margin-top: 5px;">Millet Kıraathanesi<br>Yönetim Sistemi v5.3</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    else:
+        st.markdown("## AKYURT KÜTÜPHANESİ")
+        st.warning("Logo bulunamadı! (akyurt_logo.png)")
+
     st.markdown("---")
+    # (Buradan sonra menu = st.radio... diye devam ediyor, oraya dokunma)
+
+    # --- MENÜ ---
+    # Not: Buradaki isimler aşağıdaki if/elif bloklarıyla birebir aynı olmalı!
     menu = st.radio("ANA MENÜ",
-                    ["Operasyon Merkezi", "Ödünç ve İade","Rezervasyon", "Kitap Yönetimi", "Üye Yönetimi"],
+                    ["Operasyon Merkezi", "Ödünç ve İade", "Rezervasyon", "Kitap Yönetimi", "Üye Yönetimi"],
                     label_visibility="collapsed")
+
     st.markdown("---")
+
+    # --- TARİH BİLGİSİ ---
     st.info(f"📅 Tarih: {datetime.now().strftime('%d.%m.%Y')}")
 
 # ========================================================
@@ -193,7 +229,7 @@ if menu == "Operasyon Merkezi":
         st.success("Gecikmiş iade bulunmuyor.")
 
 # ========================================================
-# 2. MODÜL: ÖDÜNÇ VE İADE
+# 2. MODÜL: ÖDÜNÇ VE İADE (BUG FIX YAPILDI ✅)
 # ========================================================
 elif menu == "Ödünç ve İade":
     st.title("Ödünç ve İade İşlemleri")
@@ -214,78 +250,81 @@ elif menu == "Ödünç ve İade":
 
             if st.button("ÖDÜNÇ VER", type="primary"):
                 conn = get_db_connection()
-                # --- REZERVASYON KONTROLÜ BAŞLANGIÇ ---
-                bk_id = books[sel_bk]
-                mem_id = members[sel_mem]
 
-                # Bu kitap için sırada bekleyen var mı?
+                # --- REZERVASYON KONTROLÜ ---
+                bk_id = books[sel_bk]
                 res_check = conn.execute(
                     "SELECT m.name FROM reservations r JOIN members m ON r.member_id = m.id WHERE r.book_id=? AND r.status='Bekliyor'",
                     (bk_id,)).fetchone()
 
+                allow = True
                 if res_check:
                     res_owner = res_check[0]
-                    # Almaya gelen kişi rezervasyon sahibi mi? (Basit isim kontrolü)
                     if sel_mem.split(" (")[0] != res_owner:
-                        st.error(f"DUR! Bu kitap **{res_owner}** adına rezerve edilmiş. Başkasına veremezsin.")
-                        conn.close()
-                        st.stop()  # İşlemi durdur
+                        st.error(f"⛔ DUR! Bu kitap **{res_owner}** adına rezerve edilmiş.")
+                        allow = False
                     else:
-                        # Rezervasyon sahibine veriyoruz, rezervasyonu düşelim
                         conn.execute(
                             "UPDATE reservations SET status='Tamamlandı' WHERE book_id=? AND status='Bekliyor'",
                             (bk_id,))
-                # --- REZERVASYON KONTROLÜ BİTİŞ ---
-                end_date = datetime.now() + timedelta(days=days)
-                conn.execute(
-                    "INSERT INTO transactions (book_id, member_id, issue_date, due_date) VALUES (?, ?, DATE('now'), ?)",
-                    (books[sel_bk], members[sel_mem], end_date.strftime('%Y-%m-%d')))
-                conn.execute("UPDATE books SET status = 'Ödünçte' WHERE id = ?", (books[sel_bk],))
-                conn.commit()
+
+                if allow:
+                    end_date = datetime.now() + timedelta(days=days)
+                    conn.execute(
+                        "INSERT INTO transactions (book_id, member_id, issue_date, due_date) VALUES (?, ?, DATE('now'), ?)",
+                        (books[sel_bk], members[sel_mem], end_date.strftime('%Y-%m-%d')))
+                    conn.execute("UPDATE books SET status = 'Ödünçte' WHERE id = ?", (books[sel_bk],))
+                    conn.commit()
+                    st.success("İşlem tamamlandı.")
+                    time.sleep(1)
+                    st.rerun()
+
                 conn.close()
-                st.success("İşlem tamamlandı.")
-                time.sleep(1)
-                st.rerun()
 
     with tab2:
         st.markdown("### İade Alma Ekranı")
         conn = get_db_connection()
         loans = pd.read_sql(
-            "SELECT t.id, b.title, m.name FROM transactions t JOIN books b ON t.book_id=b.id JOIN members m ON t.member_id=m.id WHERE t.status='Aktif'",
+            "SELECT t.id, b.title, m.name, b.id as book_id FROM transactions t JOIN books b ON t.book_id=b.id JOIN members m ON t.member_id=m.id WHERE t.status='Aktif'",
             conn)
-        conn.close()
 
         if loans.empty:
             st.info("İade bekleyen kitap yok.")
+            conn.close()
         else:
-            loan_dict = {f"{row['title']} - {row['name']}": row['id'] for i, row in loans.iterrows()}
+            loan_dict = {f"{row['title']} - {row['name']}": (row['id'], row['book_id']) for i, row in loans.iterrows()}
             sel_ret = st.selectbox("İade Edilen:", list(loan_dict.keys()))
 
             if st.button("İADEYİ ONAYLA"):
-                tid = loan_dict[sel_ret]
-                conn = get_db_connection()
-                conn.execute("UPDATE transactions SET return_date=DATE('now'), status='Tamamlandı' WHERE id=?", (tid,))
-                bid = conn.execute("SELECT book_id FROM transactions WHERE id=?", (tid,)).fetchone()[0]
-                conn.execute("UPDATE books SET status='Müsait' WHERE id=?", (bid,))
-                conn.commit()
-                conn.close()
-                st.success("İade alındı.")
-                time.sleep(1)
-                # --- İADE SONRASI UYARI ---
-                res_check = conn.execute("""
-                                    SELECT m.name, m.phone FROM reservations r 
-                                    JOIN members m ON r.member_id = m.id 
-                                    WHERE r.book_id=? AND r.status='Bekliyor' 
-                                    ORDER BY r.request_date ASC LIMIT 1
-                                """, (bid,)).fetchone()
+                trans_id, book_id = loan_dict[sel_ret]
 
+                # 1. İadeyi Yap
+                conn.execute("UPDATE transactions SET return_date=DATE('now'), status='Tamamlandı' WHERE id=?",
+                             (trans_id,))
+                conn.execute("UPDATE books SET status='Müsait' WHERE id=?", (book_id,))
+
+                # 2. Rezervasyon Kontrolü (Bağlantı hala açık!)
+                res_check = conn.execute("""
+                    SELECT m.name, m.phone FROM reservations r 
+                    JOIN members m ON r.member_id = m.id 
+                    WHERE r.book_id=? AND r.status='Bekliyor' 
+                    ORDER BY r.request_date ASC LIMIT 1
+                """, (book_id,)).fetchone()
+
+                conn.commit()  # Değişiklikleri kaydet
+
+                st.success("Kitap iade alındı.")
+
+                # 3. Uyarı varsa göster
                 if res_check:
                     st.warning(f"DİKKAT! Bu kitap için sırada bekleyen var: **{res_check[0]}**")
-                    st.info(f"İletişim: {res_check[1]} - Lütfen haber verin.")
-                    time.sleep(4)  # Uyarıyı okuması için biraz beklet
-                # -------------------------
-                st.rerun()
+                    st.info(f"İletişim: {res_check[1]}")
+                    time.sleep(5)  # Okuması için bekle
+                else:
+                    time.sleep(1)
 
+                conn.close()  # <--- ARTIK KAPATABİLİRİZ
+                st.rerun()
 
 # ========================================================
 # YENİ MODÜL: REZERVASYON
@@ -366,24 +405,49 @@ elif menu == "Rezervasyon":
                 st.rerun()
 
 # ========================================================
-# 3. MODÜL: KİTAP YÖNETİMİ (YENİ CRUD SİSTEMİ)
+# 4. MODÜL: KİTAP YÖNETİMİ (GELİŞMİŞ FİLTRELEME)
 # ========================================================
 elif menu == "Kitap Yönetimi":
     st.title("Kitap Envanter Yönetimi")
 
-    tab_list, tab_add, tab_edit = st.tabs(["📋 Kitap Listesi", "➕ Yeni Kitap Ekle", "✏️ Düzenle / Sil"])
+    # Yeni Tab Yapısı: Tümü | Ödünçtekiler | Ekle | Düzenle
+    tab_list, tab_loaned, tab_add, tab_edit = st.tabs(
+        ["Tüm Envanter", "Ödünçtekiler & Sıra", "Yeni Ekle", "Düzenle / Sil"])
 
-    # --- LİSTELEME ---
+    # --- 1. TÜM ENVANTER ---
     with tab_list:
         search = st.text_input("Kitap Ara:", placeholder="Kitap adı, yazar...")
         conn = get_db_connection()
-        q = "SELECT title as 'Eser', author as 'Yazar', location as 'Raf', status as 'Durum', isbn as 'ISBN' FROM books"
+        q = "SELECT title as 'Eser', author as 'Yazar', location as 'Raf', status as 'Durum' FROM books"
         if search: q += f" WHERE title LIKE '%{search}%' OR author LIKE '%{search}%'"
         df = pd.read_sql(q, conn)
         st.markdown(create_custom_table(df), unsafe_allow_html=True)
         conn.close()
 
-    # --- EKLEME ---
+    # --- 2. ÖDÜNÇTEKİLER VE SIRA DURUMU (YENİ ÖZELLİK) ---
+    with tab_loaned:
+        st.markdown("### Şu An Dışarıda Olan Kitaplar")
+        conn = get_db_connection()
+        # Bu sorgu biraz karmaşık: Kitabı alanı, tarihi ve O KİTAP İÇİN BEKLEYEN REZERVASYON SAYISINI getirir.
+        q_loaned = """
+        SELECT b.title as 'Eser', m.name as 'Alan Üye', t.due_date as 'Dönüş Tarihi',
+        (SELECT COUNT(*) FROM reservations r WHERE r.book_id = b.id AND r.status='Bekliyor') as 'Sırada Bekleyen'
+        FROM transactions t
+        JOIN books b ON t.book_id = b.id
+        JOIN members m ON t.member_id = m.id
+        WHERE t.status = 'Aktif'
+        """
+        df_loaned = pd.read_sql(q_loaned, conn)
+
+        if df_loaned.empty:
+            st.info("Şu an dışarıda hiç kitap yok.")
+        else:
+            # Bekleyen varsa o sütunu kırmızı gösterelim
+            df_loaned['Sırada Bekleyen'] = df_loaned['Sırada Bekleyen'].apply(lambda x: f"{x} KİŞİ" if x > 0 else "-")
+            st.markdown(create_custom_table(df_loaned, alert_col="Sırada Bekleyen"), unsafe_allow_html=True)
+        conn.close()
+
+    # --- 3. EKLEME ---
     with tab_add:
         st.markdown("### Yeni Eser Girişi")
         with st.container(border=True):
@@ -403,58 +467,49 @@ elif menu == "Kitap Yönetimi":
                         conn.close()
                         st.success(f"'{t}' envantere eklendi.")
                     else:
-                        st.error("Kitap adı ve Yazar zorunludur.")
+                        st.error("Eksik bilgi.")
 
-    # --- DÜZENLEME / SİLME ---
+    # --- 4. DÜZENLEME / SİLME ---
     with tab_edit:
         st.markdown("### Kitap Düzenle veya Sil")
-
-        # Tüm kitapları (ID'leri ile) çekelim
-        all_books = get_books_dict()  # Tüm kitaplar (müsait/ödünçte farketmez)
+        all_books = get_books_dict()
 
         if not all_books:
-            st.warning("Düzenlenecek kitap yok.")
+            st.warning("Kitap yok.")
         else:
-            selected_book_key = st.selectbox("İşlem Yapılacak Kitabı Seç:", list(all_books.keys()))
+            selected_book_key = st.selectbox("İşlem Yapılacak Kitap:", list(all_books.keys()))
             selected_book_id = all_books[selected_book_key]
 
             conn = get_db_connection()
-            # Seçilen kitabın mevcut bilgilerini getir
             curr_book = conn.execute("SELECT * FROM books WHERE id=?", (selected_book_id,)).fetchone()
             conn.close()
 
-            # Form içinde göster (Index 1=title, 2=author, 3=isbn, 4=location)
             with st.form("edit_book_form"):
-                st.info(f"Seçilen Kitap ID: {selected_book_id}")
                 new_title = st.text_input("Kitap Adı", value=curr_book[1])
                 new_author = st.text_input("Yazar", value=curr_book[2])
                 new_loc = st.text_input("Raf Yeri", value=curr_book[4])
 
                 c1, c2 = st.columns(2)
-                update_btn = c1.form_submit_button("💾 BİLGİLERİ GÜNCELLE")
-                delete_btn = c2.form_submit_button("🗑️ KİTABI SİL (DİKKAT)")
-
-                if update_btn:
+                if c1.form_submit_button("💾 GÜNCELLE"):
                     conn = get_db_connection()
                     conn.execute("UPDATE books SET title=?, author=?, location=? WHERE id=?",
                                  (new_title, new_author, new_loc, selected_book_id))
-                    conn.commit()
+                    conn.commit();
                     conn.close()
-                    st.success("Bilgiler güncellendi!")
-                    time.sleep(1)
+                    st.success("Güncellendi!")
+                    time.sleep(1);
                     st.rerun()
 
-                if delete_btn:
+                if c2.form_submit_button("🗑️ SİL"):
                     conn = get_db_connection()
-                    # Önce kontrol: Kitap ödünçte mi?
                     status = conn.execute("SELECT status FROM books WHERE id=?", (selected_book_id,)).fetchone()[0]
                     if status == 'Ödünçte':
-                        st.error("HATA: Bu kitap şu an ödünçte olduğu için silinemez! Önce iade alın.")
+                        st.error("Bu kitap ödünçte, silinemez!")
                     else:
                         conn.execute("DELETE FROM books WHERE id=?", (selected_book_id,))
                         conn.commit()
-                        st.success("Kitap silindi.")
-                        time.sleep(1)
+                        st.success("Silindi.")
+                        time.sleep(1);
                         st.rerun()
                     conn.close()
 
@@ -542,3 +597,28 @@ elif menu == "Üye Yönetimi":
                         time.sleep(1)
                         st.rerun()
                     conn.close()
+
+# --- FOOTER (ORTALI VE SABİT) ---
+st.markdown("""
+<style>
+.footer {
+    position: fixed; 
+    left: 0; 
+    bottom: 0; 
+    width: 100%; 
+    background-color: #111; 
+    color: grey;
+    text-align: center; 
+    font-size: 12px; 
+    padding: 10px 0; 
+    z-index: 999;
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    border-top: 1px solid #333;
+}
+</style>
+<div class="footer">
+    T.C. Akyurt Belediyesi Bilgi İşlem Müdürlüğü © 2025 | Millet Kıraathanesi Yönetim Sistemi v5.3 | Utku Buğra YILMAZ | KVKK Aydınlatma Metni
+</div>
+""", unsafe_allow_html=True)
