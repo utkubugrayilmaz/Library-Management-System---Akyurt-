@@ -11,113 +11,181 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR (FINAL) ---
+# --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR (DÜZELTİLMİŞ) ---
 st.markdown("""
 <style>
-    /* 1. GENEL YAZI BOYUTU - HER ŞEY İÇİN */
+    /* 1. GENEL YAZI BOYUTU */
     html, body, p, div, span {
         font-family: 'Segoe UI', sans-serif;
-        font-size: 20px !important; /* Standart metin boyutu */
+        font-size: 20px !important; 
         line-height: 1.6;
     }
 
     /* 2. BAŞLIKLAR */
     h1 { font-size: 3rem !important; color: #4A90E2; font-weight: 700; }
     h2 { font-size: 2.4rem !important; border-bottom: 2px solid #444; margin-bottom: 20px; }
-    h3 { font-size: 1.8rem !important; color: #ddd; }
 
-    /* 3. KPI KARTLARI (SAYILARIN OLDUĞU KUTULAR) - DEVASA VE ORTALI */
+    /* 3. KPI KARTLARI (SAYILARIN OLDUĞU KUTULAR) */
     div[data-testid="stMetric"] {
-        background-color: #222;       /* Kutu arka planı koyu gri */
-        border: 2px solid #555;       /* Çerçeve */
-        padding: 15px 0px;            /* Dikey boşluk */
-        border-radius: 12px;          /* Köşeleri yuvarla */
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.5); /* Hafif gölge */
+        background-color: #222;       
+        border: 2px solid #555;       
+        padding: 10px;                
+        border-radius: 12px;          
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.5); 
 
-        /* MERKEZLEME AYARLARI */
-        text-align: center !important; 
+        /* İÇERİĞİ ORTALA */
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-height: 160px; /* Kutuların hepsi eşit boyda dursun */
+        text-align: center;
+        min-height: 150px; 
     }
 
     /* Kartın Başlığı (Toplam Envanter vb.) */
     div[data-testid="stMetricLabel"] {
-        font-size: 1.4rem !important; 
+        font-size: 1.5rem !important; 
         color: #bbb;
         width: 100%;
         text-align: center !important;
-        justify-content: center !important;
-        display: flex;
-    }
-    div[data-testid="stMetricLabel"] p {
-        font-size: 1.4rem !important;
     }
 
-    /* Kartın Değeri (Sayılar: 50, 20 vs.) */
-    div[data-testid="stMetricValue"] {
-        font-size: 15rem !important; /* 80px DEV PUNTOLU SAYI */
-        font-weight: 900 !important; /* Kapkalın */
+    /* --- BURASI SAYIYI BÜYÜTEN KISIM --- */
+    /* Hem ana kutuyu hem de içindeki div'i hedefliyoruz ki kaçarı olmasın */
+    div[data-testid="stMetricValue"], 
+    div[data-testid="stMetricValue"] > div {
+        font-size: 70px !important; /* BURAYI DEĞİŞTİRİRSEN SAYI BÜYÜR/KÜÇÜLÜR */
+        font-weight: 900 !important;
         color: white;
         text-align: center !important;
-        margin-top: 5px;
-        line-height: 1.2;
+        line-height: 1.1;
     }
 
-    /* 4. INPUT VE BUTONLAR - BÜYÜK BOY */
-    .stSelectbox div[data-baseweb="select"] > div {
-        height: 3.5rem; 
-    }
-    .stSelectbox div[data-baseweb="select"] span {
-        font-size: 1.2rem !important;
-    }
-    .stTextInput input {
-        font-size: 1.2rem !important;
-        height: 3.5rem;
-    }
-    .stButton button {
-        font-size: 1.4rem !important;
-        height: 4rem !important;
-        font-weight: bold;
-    }
+    /* 4. INPUT VE BUTONLAR */
+    .stSelectbox div[data-baseweb="select"] > div { height: 3.5rem; }
+    .stSelectbox div[data-baseweb="select"] span { font-size: 1.2rem !important; }
+    .stTextInput input { font-size: 1.2rem !important; height: 3.5rem; }
+    .stButton button { font-size: 1.4rem !important; height: 4rem !important; font-weight: bold; }
 
-    /* 5. KENAR ÇUBUĞU MENÜSÜ */
-    section[data-testid="stSidebar"] .stRadio label {
-        font-size: 1.4rem !important;
-        padding: 15px 5px;
-    }
+    /* 5. MENÜ VE TABLO */
+    section[data-testid="stSidebar"] .stRadio label { font-size: 1.4rem !important; padding: 15px 5px; }
 
-    /* 6. TABLO STİLİ (HTML TABLO İÇİN) */
-    .big-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        font-size: 1.2rem;
-    }
-    .big-table th {
-        text-align: left;
-        background-color: #333;
-        color: #4A90E2;
-        padding: 15px;
-        font-size: 1.3rem;
-        border-bottom: 2px solid #555;
-    }
-    .big-table td {
-        padding: 15px;
-        border-bottom: 1px solid #444;
-        color: #eee;
-    }
-    .big-table tr:hover {
-        background-color: #222;
-    }
-    .alert-row {
-        color: #ff6b6b !important;
-        font-weight: bold;
-    }
+    .big-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 1.2rem; }
+    .big-table th { text-align: left; background-color: #333; color: #4A90E2; padding: 15px; font-size: 1.3rem; border-bottom: 2px solid #555; }
+    .big-table td { padding: 15px; border-bottom: 1px solid #444; color: #eee; }
+    .big-table tr:hover { background-color: #222; }
+    .alert-row { color: #ff6b6b !important; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
+
+
+# # --- CSS: MAKSİMUM OKUNABİLİRLİK VE DEVASA KARTLAR (FINAL) ---
+# st.markdown("""
+# <style>
+#     /* 1. GENEL YAZI BOYUTU - HER ŞEY İÇİN */
+#     html, body, p, div, span {
+#         font-family: 'Segoe UI', sans-serif;
+#         font-size: 20px !important; /* Standart metin boyutu */
+#         line-height: 1.6;
+#     }
+#
+#     /* 2. BAŞLIKLAR */
+#     h1 { font-size: 3rem !important; color: #4A90E2; font-weight: 700; }
+#     h2 { font-size: 2.4rem !important; border-bottom: 2px solid #444; margin-bottom: 20px; }
+#     h3 { font-size: 1.8rem !important; color: #ddd; }
+#
+#     /* 3. KPI KARTLARI (SAYILARIN OLDUĞU KUTULAR) - DEVASA VE ORTALI */
+#     div[data-testid="stMetric"] {
+#         background-color: #222;       /* Kutu arka planı koyu gri */
+#         border: 2px solid #555;       /* Çerçeve */
+#         padding: 15px 0px;            /* Dikey boşluk */
+#         border-radius: 12px;          /* Köşeleri yuvarla */
+#         box-shadow: 2px 2px 5px rgba(0,0,0,0.5); /* Hafif gölge */
+#
+#         /* MERKEZLEME AYARLARI */
+#         text-align: center !important;
+#         display: flex;
+#         flex-direction: column;
+#         align-items: center;
+#         justify-content: center;
+#         min-height: 160px; /* Kutuların hepsi eşit boyda dursun */
+#     }
+#
+#     /* Kartın Başlığı (Toplam Envanter vb.) */
+#     div[data-testid="stMetricLabel"] {
+#         font-size: 1.4rem !important;
+#         color: #bbb;
+#         width: 100%;
+#         text-align: center !important;
+#         justify-content: center !important;
+#         display: flex;
+#     }
+#     div[data-testid="stMetricLabel"] p {
+#         font-size: 1.4rem !important;
+#     }
+#
+#     /* Kartın Değeri (Sayılar: 50, 20 vs.) */
+#     div[data-testid="stMetricValue"] {
+#         font-size: 15rem !important; /* 80px DEV PUNTOLU SAYI */
+#         font-weight: 900 !important; /* Kapkalın */
+#         color: white;
+#         text-align: center !important;
+#         margin-top: 5px;
+#         line-height: 1.2;
+#     }
+#
+#     /* 4. INPUT VE BUTONLAR - BÜYÜK BOY */
+#     .stSelectbox div[data-baseweb="select"] > div {
+#         height: 3.5rem;
+#     }
+#     .stSelectbox div[data-baseweb="select"] span {
+#         font-size: 1.2rem !important;
+#     }
+#     .stTextInput input {
+#         font-size: 1.2rem !important;
+#         height: 3.5rem;
+#     }
+#     .stButton button {
+#         font-size: 1.4rem !important;
+#         height: 4rem !important;
+#         font-weight: bold;
+#     }
+#
+#     /* 5. KENAR ÇUBUĞU MENÜSÜ */
+#     section[data-testid="stSidebar"] .stRadio label {
+#         font-size: 1.4rem !important;
+#         padding: 15px 5px;
+#     }
+#
+#     /* 6. TABLO STİLİ (HTML TABLO İÇİN) */
+#     .big-table {
+#         width: 100%;
+#         border-collapse: collapse;
+#         margin-top: 20px;
+#         font-size: 1.2rem;
+#     }
+#     .big-table th {
+#         text-align: left;
+#         background-color: #333;
+#         color: #4A90E2;
+#         padding: 15px;
+#         font-size: 1.3rem;
+#         border-bottom: 2px solid #555;
+#     }
+#     .big-table td {
+#         padding: 15px;
+#         border-bottom: 1px solid #444;
+#         color: #eee;
+#     }
+#     .big-table tr:hover {
+#         background-color: #222;
+#     }
+#     .alert-row {
+#         color: #ff6b6b !important;
+#         font-weight: bold;
+#     }
+# </style>
+# """, unsafe_allow_html=True)
 
 # --- YARDIMCI: ÖZEL BÜYÜK TABLO OLUŞTURUCU ---
 def create_custom_table(df, alert_col=None):
